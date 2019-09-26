@@ -7,7 +7,7 @@ from keras.layers.core import Dropout
 from keras import backend as K
 
 class RPS_CNN:
-    @static method
+    @staticmethod
     def build_cnn(width, height, depth, classes):
         model = Sequential()
         input_shape = (height, width, depth)

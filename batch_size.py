@@ -63,3 +63,4 @@ def FindBatchSize(model):
     memoryused= [];    total_params= [];    GCPU= "";
     del memoryused, total_params, GCPU;    gc.collect()
     return BatchFound
+
