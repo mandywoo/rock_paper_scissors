@@ -25,6 +25,14 @@ from imutils import paths
 from imutils.video import VideoStream
 import time
 
+def predict_img(model, lb, img):
+    # classifying input image
+    probabilities = model.predict(img)[0]
+    index = np.argmax(proba)       # argmax: Returns the indices of the maximum values along an axis.
+    label = lb.classes_[index]
+    return probabilities[index], label
+
+
 ap = argparse.ArgumentParser()
 ap.add_argument('-m', '--model', help='path to saved model')
 ap.add_argument('-l', '--labels', help='path to saved binarized labels')
@@ -44,6 +52,9 @@ fgbg = cv2.createBackgroundSubtractorMOG2()
 moves = ['rock', 'paper', 'scissor']
 game_rule = {'rock': 'scissor', 'paper': 'rock', 'scissor': 'paper'}
 
+start_game = False
+count_down = 3
+
 while True:
     frame = vs.read()
 
@@ -55,32 +66,44 @@ while True:
     aug_frame = fgbg.apply(frame, learningRate=0.005)
 
     # classifying input image
-    probabilities = model.predict(aug_frame)[0]
-    index = np.argmax(proba)       # argmax: Returns the indices of the maximum values along an axis.
-    label = lb.classes_[index]
+    # probabilities = model.predict(aug_frame)[0]
+    # index = np.argmax(proba)       # argmax: Returns the indices of the maximum values along an axis.
+    # label = lb.classes_[index]
+    probability, label = predict_img(model, lb, aug_frame)
 
-    # build and draw label on image
-    label = '{}: {:.2f}%'.format(label, probabilities[index])
-    cv2.putText(frame, label, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    if label == 'thumbs_up':
+        start_game = True
+    if start_game:
+        cv2.putText(frame, str(count_down), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        count_down -= 1
+        time.sleep(1.0)
+        if count_down == 0:
+            count_down = 3
+            start_game = False
+            probability, label = predict_img(model, lb, aug_frame)
 
-    # random robot move -----> to be changed
-    robot_move = random.choice(moves)
+            # build and draw label on image
+            label = '{}: {:.2f}%'.format(label, probability)
+            cv2.putText(frame, label, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
-    # compare robot move to human move
-    win = None
-    if game_rule[robot_move] == label:
-        win = 'robot'
-    elif robot_move == label:
-        win = 'tie'
-    else:
-        win = 'human'
+            # random robot move -----> to be changed
+            robot_move = random.choice(moves)
 
-    win_text = 'Robot: {} vs. Human: {} {}'.format(robot_move, label, win)
-    cv2.putText(frame, win_text, (100, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            # compare robot move to human move
+            win = None
+            if game_rule[robot_move] == label:
+                win = 'robot'
+            elif robot_move == label:
+                win = 'tie'
+            else:
+                win = 'human'
+
+            win_text = 'Robot: {} vs. Human: {} {}'.format(robot_move, label, win)
+            cv2.putText(frame, win_text, (100, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
 
     # show frame
-    print('[INFO] {}: {:.2f}%'.format(label, probabilities[index]))
+    print('[INFO] {}: {:.2f}%'.format(label, probability))
     cv2.imshow('Game', frame)
 
     key = cv2.waitKey(1) & 0xFF
