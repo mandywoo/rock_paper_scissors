@@ -21,9 +21,12 @@ ap.add_argument('-p', '--dataset-path', required=True, help='out path for datase
 args = vars(ap.parse_args())
 
 # make folder for image dataset
-dataset_path = args['dataset_path'] + os.sep + args['image']
+dataset_path = args['dataset_path'] + os.sep + 'Dataset'
 if not os.path.exists(dataset_path):
     os.makedirs(dataset_path)
+img_dataset_path = dataset_path + os.sep + args['image']
+if not os.path.exists(img_dataset_path):
+    os.makedirs(img_dataset_path)
 
 # start videostream
 vs = VideoStream(src=0).start()
@@ -35,11 +38,11 @@ frame_count = 0
 
 fgbg = cv2.createBackgroundSubtractorMOG2()
 
-
-
 while True:
     frame = vs.read()
-    frame = imutils.resize(frame, width=100)
+    # frame = imutils.resize(frame, width=100)
+    frame = imutils.resize(frame, width=600)
+
 
     frame = fgbg.apply(frame, learningRate=0.005)
 
@@ -47,11 +50,11 @@ while True:
 
     # save image in correct dataset path
     frame_count += 1
-    cv2.imwrite(dataset_path + os.sep + 'img_' + str(frame_count) + '.png', frame)
+    # cv2.imwrite(dataset_path + os.sep + 'img_' + str(frame_count) + '.png', frame)
 
     # exit conditions
     key = cv2.waitKey(1) & 0xFF
-    if key == ord('q') or frame_count == int(args['number_of_images']):
+    if key == ord('q'): # or frame_count == int(args['number_of_images']):
         break
 
 
