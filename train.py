@@ -4,6 +4,7 @@ matplotlib.use('Agg')
 
 from keras.preprocessing.image import ImageDataGenerator   # for data augmentation
 from keras.optimizers import Adam   # optimizer used to train network
+from keras.optimizers import SGD
 from keras.preprocessing.image import img_to_array
 # allows us to input set of class labels, transform labels into one-hot encoded vectors, 
 # then allow us to take an integer class label prediction from Keras CNN and transform it back into a human-readable label
@@ -25,16 +26,16 @@ from cnn import RPS_CNN
 from batch_size import FindBatchSize
 
 ap = argparse.ArgumentParser()
-ap.add_argument('-p', '--path', help='path to dataset')
-ap.add_argument('-m', '--model', help='path to save model')
-ap.add_argument('-l', '--labels', help='path to save label binarizer')
-ap.add_argument('-g', '--graph', help='path to save plot')
+ap.add_argument('-p', '--path', required=True, help='path to dataset')
+ap.add_argument('-m', '--model', required=True, help='path to save model')
+ap.add_argument('-l', '--labels', required=True, help='path to save label binarizer')
+ap.add_argument('-g', '--graph', required=True, help='path to save plot')
 args = vars(ap.parse_args())
 
-EPOCHS = 25    # num of epochs to train for (how many times the network sees each training example and learns patterns from it)
+EPOCHS = 100    # num of epochs to train for (how many times the network sees each training example and learns patterns from it)
 INIT_LR = 1e-3  # initial learning rate (1e-3 is default for Adam optimizer)
 BS = FindBatchSize(RPS_CNN)      # batch size (we will pass batches of images into the network for training)
-IMAGE_DIMS = (100, 100, 3)    # image dimensions (96x96 pixels, 3 channels)
+IMAGE_DIMS = (225, 400, 1)    # image dimensions (96x96 pixels, 3 channels)
 
 
 print('[INFO] loading images...')
@@ -47,7 +48,8 @@ data = []
 labels = []
 for image_path in image_paths:
     image = cv2.imread(image_path)
-    image = cv2.resive(image, IMAGE_DIMS[1], IMAGE_DIMS[0])
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    image = cv2.resize(image, (IMAGE_DIMS[1], IMAGE_DIMS[0]))
     image = img_to_array(image)
     data.append(image)
 
@@ -57,7 +59,7 @@ for image_path in image_paths:
 # scale raw pixel intensities to range [0, 1] for normalisation
 data = np.array(data, dtype='float') / 255.0
 labels = np.array(labels)
-print('[INFO] data matrix: {:.2f}MB'.format(train_data.nbytes / (1024 * 1000.0)))
+print('[INFO] data matrix: {:.2f}MB'.format(data.nbytes / (1024 * 1000.0)))
 
 # binarize labels
 print('[INFO] binarizing labels')
@@ -70,8 +72,9 @@ train_x, val_x, train_y, val_y = train_test_split(data, labels, test_size=0.2, r
 
 # create model
 print('[INFO] creating model...')
-model = RPS_CNN.build_cnn(IMAGE_DIMS[0], IMAGE_DIMS[1], IMAGE_DIMS[2], len(labels))
-optimizer = Adam(lr=INIT_LR, decay=INIT_LR / EPOCHS)
+model = RPS_CNN.build_cnn(IMAGE_DIMS[1], IMAGE_DIMS[0], IMAGE_DIMS[2], len(lb.classes_))
+# optimizer = Adam(lr=INIT_LR, decay=INIT_LR / EPOCHS)
+optimizer = SGD(lr=0.01)
 model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
 # augment data to increase variety in dataset and prevent overfitting
@@ -92,8 +95,8 @@ aug_data.fit(train_x)
 
 # make patient early stopping
 print('[INFO] initiating tools for early stopping and saving')
-es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=3)
-mc = ModelCheckpoint(args['model'], monitor='val_acc', mode='max', verbose=1, save_only_best=True)
+es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10)
+mc = ModelCheckpoint(args['model'], monitor='val_acc', mode='max', verbose=1, save_best_only=True)
 
 # train network
 print('[INFO] training network')
@@ -110,7 +113,7 @@ model.save(args['model'])
 
 # saving label binarizer
 print('[INFO] saving label binarizer')
-f = open(args['label'], 'wb')
+f = open(args['labels'], 'wb')
 f.write(pickle.dumps(lb))
 f.close()
 

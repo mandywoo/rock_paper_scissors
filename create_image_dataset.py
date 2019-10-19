@@ -35,13 +35,14 @@ time.sleep(1.0)
 # keep track of frame number for naming purposes
 frame_count = 0
 
+num_images_taken = 1
 
 fgbg = cv2.createBackgroundSubtractorMOG2()
 
 while True:
     frame = vs.read()
     # frame = imutils.resize(frame, width=100)
-    frame = imutils.resize(frame, width=600)
+    frame = imutils.resize(frame, width=400)
 
 
     frame = fgbg.apply(frame, learningRate=0.005)
@@ -50,11 +51,18 @@ while True:
 
     # save image in correct dataset path
     frame_count += 1
-    # cv2.imwrite(dataset_path + os.sep + 'img_' + str(frame_count) + '.png', frame)
+    key = cv2.waitKey(1) & 0xFF
+    # if key == ord('c'):
+    #     cv2.imwrite(img_dataset_path + os.sep + 'img_' + str(num_images_taken) + '.png', frame)
+    #     num_images_taken += 1
+
+    # cv2.imwrite(img_dataset_path + os.sep + 'img_' + str(num_images_taken) + '.png', frame)
+    # num_images_taken += 1
+    print(frame.shape)
 
     # exit conditions
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord('q'): # or frame_count == int(args['number_of_images']):
+    # key = cv2.waitKey(1) & 0xFF
+    if key == ord('q') or num_images_taken == int(args['number_of_images']) + 1:
         break
 
 

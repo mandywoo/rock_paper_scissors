@@ -14,14 +14,21 @@ class RPS_CNN:
 
         channel_dimension = -1
 
-        if K.input_data_format() == 'channels_first':
+        if K.image_data_format() == 'channels_first':
             input_shape = (depth, height, width)
             channel_dimension = 1
 
-        model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=input_shape))
-        model.add(MaxPooling2D(pooling_size=(2, 2)))
+        model.add(Conv2D(64, 5, 5, activation='relu', input_shape=input_shape))
+        model.add(Conv2D(64, 5, 5, activation='relu'))
+        model.add(MaxPooling2D())
+        model.add(Dropout(0.25))
+        model.add(Conv2D(128, 5, 5, activation='relu'))
+        model.add(Conv2D(128, 5, 5, activation='relu'))
+        model.add(MaxPooling2D())
         model.add(Dropout(0.25))
         model.add(Flatten())
+        model.add(Dense(128, activation='relu'))
+        model.add(Dropout(0.5))
         model.add(Dense(classes, activation='softmax'))
 
         return model
