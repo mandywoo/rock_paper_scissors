@@ -35,7 +35,7 @@ args = vars(ap.parse_args())
 EPOCHS = 100    # num of epochs to train for (how many times the network sees each training example and learns patterns from it)
 INIT_LR = 1e-3  # initial learning rate (1e-3 is default for Adam optimizer)
 BS = FindBatchSize(RPS_CNN)      # batch size (we will pass batches of images into the network for training)
-IMAGE_DIMS = (225, 400, 1)    # image dimensions (96x96 pixels, 3 channels)
+IMAGE_DIMS = (100, 100, 1)    # image dimensions (96x96 pixels, 3 channels)
 
 
 print('[INFO] loading images...')
